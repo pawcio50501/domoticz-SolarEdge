@@ -74,7 +74,7 @@ class BasePlugin:
                 if Parameters["Mode6"] == "Debug":
                     Domoticz.Log("SolarEdge plugin -> Connected successfully to: "+Connection.Address)
                 success = True
-                #todo if needed...
+                self.refreshData()
 
         if False == success:
             Domoticz.Log("SolarEdge plugin -> Failed to connect ("+str(Status)+") to: "+Parameters["Address"]+" with error: "+Description)
@@ -95,7 +95,9 @@ class BasePlugin:
     def onHeartbeat(self):
         #Domoticz.Log("onHeartbeat called")
 
-        #Disabled temporary
+        #Intentionaly disabled self refresh
+        #Now exteral script is triggering moment of the data reception through onDeviceModified function
+        #workaround for synchronization with external energy meter 
         #self.refreshData()
 
         return True
@@ -109,66 +111,70 @@ class BasePlugin:
         #     out += (str(Data[i]) + ', ')
         # Domoticz.Log(out)
 
-        typeDID = int.from_bytes(Data[9:11], byteorder='big')
-        current = int.from_bytes(Data[13:15], byteorder='big')
-        currentA = int.from_bytes(Data[15:17], byteorder='big')
-        currentB = int.from_bytes(Data[17:19], byteorder='big')
-        currentC = int.from_bytes(Data[19:21], byteorder='big')
-        currentSF = int.from_bytes(Data[21:23], byteorder='big', signed=True)
+        try:
+            typeDID = int.from_bytes(Data[9:11], byteorder='big')
+            current = int.from_bytes(Data[13:15], byteorder='big')
+            currentA = int.from_bytes(Data[15:17], byteorder='big')
+            currentB = int.from_bytes(Data[17:19], byteorder='big')
+            currentC = int.from_bytes(Data[19:21], byteorder='big')
+            currentSF = int.from_bytes(Data[21:23], byteorder='big', signed=True)
 
-        voltageAB = int.from_bytes(Data[23:25], byteorder='big')
-        voltageBC = int.from_bytes(Data[25:27], byteorder='big')
-        voltageCA = int.from_bytes(Data[27:29], byteorder='big')
-        voltageAN = int.from_bytes(Data[29:31], byteorder='big')
-        voltageBN = int.from_bytes(Data[31:33], byteorder='big')
-        voltageCN = int.from_bytes(Data[33:35], byteorder='big')
-        voltageSF = int.from_bytes(Data[35:37], byteorder='big', signed=True)
+            voltageAB = int.from_bytes(Data[23:25], byteorder='big')
+            voltageBC = int.from_bytes(Data[25:27], byteorder='big')
+            voltageCA = int.from_bytes(Data[27:29], byteorder='big')
+            voltageAN = int.from_bytes(Data[29:31], byteorder='big')
+            voltageBN = int.from_bytes(Data[31:33], byteorder='big')
+            voltageCN = int.from_bytes(Data[33:35], byteorder='big')
+            voltageSF = int.from_bytes(Data[35:37], byteorder='big', signed=True)
 
-        power = int.from_bytes(Data[37:39], byteorder='big', signed=True)
-        powerSF = int.from_bytes(Data[39:41], byteorder='big', signed=True)
+            power = int.from_bytes(Data[37:39], byteorder='big', signed=True)
+            powerSF = int.from_bytes(Data[39:41], byteorder='big', signed=True)
 
-        freq = int.from_bytes(Data[41:43], byteorder='big')
-        freqSF = int.from_bytes(Data[43:45], byteorder='big', signed=True)
+            freq = int.from_bytes(Data[41:43], byteorder='big')
+            freqSF = int.from_bytes(Data[43:45], byteorder='big', signed=True)
 
-        energy = int.from_bytes(Data[57:61], byteorder='big')
-        energySF = int.from_bytes(Data[61:63], byteorder='big')
+            energy = int.from_bytes(Data[57:61], byteorder='big')
+            energySF = int.from_bytes(Data[61:63], byteorder='big')
 
-        dcCurrent = int.from_bytes(Data[63:65], byteorder='big')
-        dcCurrentSF = int.from_bytes(Data[65:67], byteorder='big', signed=True)
-        dcVoltage = int.from_bytes(Data[67:69], byteorder='big')
-        dcVoltageSF = int.from_bytes(Data[69:71], byteorder='big', signed=True)
-        dcPower = int.from_bytes(Data[71:73], byteorder='big', signed=True)
-        dcPowerSF = int.from_bytes(Data[73:75], byteorder='big', signed=True)
+            dcCurrent = int.from_bytes(Data[63:65], byteorder='big')
+            dcCurrentSF = int.from_bytes(Data[65:67], byteorder='big', signed=True)
+            dcVoltage = int.from_bytes(Data[67:69], byteorder='big')
+            dcVoltageSF = int.from_bytes(Data[69:71], byteorder='big', signed=True)
+            dcPower = int.from_bytes(Data[71:73], byteorder='big', signed=True)
+            dcPowerSF = int.from_bytes(Data[73:75], byteorder='big', signed=True)
 
-        # I've problem with reading those values
-        # temp = int.from_bytes(Data[75:77], byteorder='big', signed=True)
-        # tempSF = int.from_bytes(Data[77:79], byteorder='big', signed=True)
+            # I've problem with reading those values
+            # temp = int.from_bytes(Data[75:77], byteorder='big', signed=True)
+            # tempSF = int.from_bytes(Data[77:79], byteorder='big', signed=True)
 
-        if Parameters["Mode6"] == "Debug":
-            Domoticz.Log("Type DID: " + str(typeDID))
-            Domoticz.Log("Current: " + str(current * (10**currentSF)))
-            Domoticz.Log("CurrentA: " + str(currentA * (10**currentSF)))
-            Domoticz.Log("CurrentB: " + str(currentB * (10**currentSF)))
-            Domoticz.Log("CurrentC: " + str(currentC * (10**currentSF)))
+            if Parameters["Mode6"] == "Debug":
+                Domoticz.Log("Type DID: " + str(typeDID))
+                Domoticz.Log("Current: " + str(current * (10**currentSF)))
+                Domoticz.Log("CurrentA: " + str(currentA * (10**currentSF)))
+                Domoticz.Log("CurrentB: " + str(currentB * (10**currentSF)))
+                Domoticz.Log("CurrentC: " + str(currentC * (10**currentSF)))
 
-            Domoticz.Log("voltageAN: " + str(voltageAN * (10**voltageSF)))
-            Domoticz.Log("voltageBN: " + str(voltageBN * (10**voltageSF)))
-            Domoticz.Log("voltageCN: " + str(voltageCN * (10**voltageSF)))
+                Domoticz.Log("voltageAN: " + str(voltageAN * (10**voltageSF)))
+                Domoticz.Log("voltageBN: " + str(voltageBN * (10**voltageSF)))
+                Domoticz.Log("voltageCN: " + str(voltageCN * (10**voltageSF)))
 
-            Domoticz.Log("Power: " + str(power * (10**powerSF)))
-            Domoticz.Log("Freq: " + str(freq * (10**freqSF)))
-            Domoticz.Log("Energy: " + str(energy * (10**energySF)))
-            
-            Domoticz.Log("dc voltage: " + str(dcVoltage * (10**dcVoltageSF)))
-            Domoticz.Log("dc current: " + str(dcCurrent * (10**dcCurrentSF)))
-            Domoticz.Log("dc power: " + str(dcPower * (10**dcPowerSF)))
-            # Domoticz.Log("temp: " + str(temp))
-            # Domoticz.Log("tempSF: " + str(tempSF))
+                Domoticz.Log("Power: " + str(power * (10**powerSF)))
+                Domoticz.Log("Freq: " + str(freq * (10**freqSF)))
+                Domoticz.Log("Energy: " + str(energy * (10**energySF)))
+                
+                Domoticz.Log("dc voltage: " + str(dcVoltage * (10**dcVoltageSF)))
+                Domoticz.Log("dc current: " + str(dcCurrent * (10**dcCurrentSF)))
+                Domoticz.Log("dc power: " + str(dcPower * (10**dcPowerSF)))
+                # Domoticz.Log("temp: " + str(temp))
+                # Domoticz.Log("tempSF: " + str(tempSF))
 
-        self.power = str(power * (10**powerSF)) + ";" + str(energy * (10**energySF))
-        self.currentL1L2L3 = str(currentA * (10**currentSF)) + ";" + str(currentB * (10**currentSF)) + ";" +str(currentC * (10**currentSF))
+            self.power = str(power * (10**powerSF)) + ";" + str(energy * (10**energySF))
+            self.currentL1L2L3 = str(currentA * (10**currentSF)) + ";" + str(currentB * (10**currentSF)) + ";" +str(currentC * (10**currentSF))
 
-        self.SyncDevices(0)
+            self.SyncDevices(0)
+        
+        except Exception as err:
+            Domoticz.Error("onMessage: "+str(err))
             
         return
 
@@ -210,9 +216,9 @@ class BasePlugin:
         
         Device = Devices[Unit]
         Domoticz.Log("onDeviceModified called for Unit " + str(Unit) + " " + str(Device))
-        if 99 == Device.nValue:
-            Domoticz.Log("Refresh data")
-            self.refreshData()
+        #if 99 == Device.nValue:
+        Domoticz.Log("Refresh data")
+        self.refreshData()
             
             
             
@@ -289,9 +295,10 @@ def DumpConfigToLog():
 
 def UpdateDevice(Unit, nValue, sValue, TimedOut):
     # Make sure that the Domoticz device still exists (they can be deleted) before updating it 
+    
     if (Unit in Devices):
         if (Devices[Unit].nValue != nValue) or (Devices[Unit].sValue != sValue):
             Devices[Unit].Update(nValue=nValue, sValue=str(sValue), TimedOut=TimedOut)
             Domoticz.Log("Update " + str(nValue) + ":'" + str(sValue) + "' (" + Devices[Unit].Name + ")")
     return
-    
+        
